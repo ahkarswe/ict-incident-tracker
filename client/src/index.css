@@ -1,0 +1,161 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+}
+
+html.light body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+html.light .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-slate-950\/90 {
+  background-color: rgba(248, 250, 252, 0.92) !important;
+}
+
+html.light .bg-slate-950\/80 {
+  background-color: rgba(248, 250, 252, 0.88) !important;
+}
+
+html.light .bg-slate-900 {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-slate-900\/80,
+html.light .bg-slate-900\/90,
+html.light .bg-slate-900\/60 {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+}
+
+html.light .bg-slate-800 {
+  background-color: #e2e8f0 !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-700 {
+  border-color: #cbd5e1 !important;
+}
+
+html.light .text-slate-100,
+html.light .text-slate-200 {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+.panel {
+  @apply rounded-lg border border-slate-800 bg-slate-900/80 shadow-panel;
+}
+
+html.light .panel {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.panel-header {
+  @apply border-b border-slate-800 px-5 py-4;
+}
+
+html.light .panel-header {
+  border-color: #e2e8f0;
+}
+
+.panel-body {
+  @apply px-5 py-4;
+}
+
+.label {
+  @apply text-xs uppercase tracking-wide text-slate-400;
+}
+
+.input {
+  @apply w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-brand-500;
+}
+
+html.light .input {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.select {
+  @apply w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-brand-500;
+}
+
+html.light .select {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition;
+}
+
+.btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700;
+}
+
+.btn-secondary {
+  @apply btn border border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800;
+}
+
+html.light .btn-secondary {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium;
+}
+
+.badge-green {
+  @apply badge bg-emerald-500/15 text-emerald-300;
+}
+
+.badge-yellow {
+  @apply badge bg-amber-500/15 text-amber-300;
+}
+
+.badge-red {
+  @apply badge bg-rose-500/15 text-rose-300;
+}
+
+.badge-slate {
+  @apply badge bg-slate-700/60 text-slate-200;
+}
+
+html.light .badge-slate {
+  background: #e2e8f0;
+  color: #334155;
+}
