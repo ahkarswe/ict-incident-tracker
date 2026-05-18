@@ -57,6 +57,7 @@ docker-compose up --build
 
 The public entrypoint is the Nginx container on `http://localhost`.
 The backend CORS allowlist is controlled by the comma-separated `CLIENT_URL` value in `.env`.
+Set `TIME_ZONE` in `.env` to control how CSV exports and printable reports format dates and times.
 
 By default, attachments are stored in the `./upload` bind mount and served locally from `/uploads`.
 To enable S3-compatible storage, set `ATTACHMENT_STORAGE=s3` and start the stack with the `s3` profile:
@@ -68,5 +69,5 @@ ATTACHMENT_STORAGE=s3 docker-compose --profile s3 up --build
 ## Notes
 
 - Attachments are modeled as placeholders for storage integration.
-- Email notifications and PDF generation are implemented as backend-ready service hooks.
+- Email notifications and browser-based printable reports are implemented as backend-ready service hooks.
 - WebSocket support is wired for live incident updates when enabled.

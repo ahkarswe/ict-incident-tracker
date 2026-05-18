@@ -8,3 +8,6 @@ exports
 backup/
 .codex
 upload/
+*.tar
+*.old
+local copy.conf

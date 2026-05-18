@@ -10,6 +10,8 @@ import IncidentDetailsPage from './pages/IncidentDetailsPage';
 import UserManagementPage from './pages/UserManagementPage';
 import ProfilePage from './pages/ProfilePage';
 import ReportsPage from './pages/ReportsPage';
+import PrintIncidentReportPage from './pages/PrintIncidentReportPage';
+import PrintReportsPage from './pages/PrintReportsPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 export default function App() {
@@ -18,6 +20,22 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/incidents/:id/print"
+        element={
+          <ProtectedRoute>
+            <PrintIncidentReportPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/reports/print"
+        element={
+          <ProtectedRoute roles={['Admin', 'Engineer']}>
+            <PrintReportsPage />
+          </ProtectedRoute>
+        }
+      />
       <Route
         element={
           <ProtectedRoute>

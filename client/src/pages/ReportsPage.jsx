@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import { Loader } from '../components/Loader';
@@ -14,21 +15,6 @@ export default function ReportsPage() {
       .then(({ data }) => setSummary(data.summary))
       .catch((err) => setError(err.response?.data?.message || 'Failed to load report summary'));
   }, []);
-
-  const downloadPdf = async () => {
-    try {
-      const response = await api.get('/incidents/report', { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'all-incidents-report.pdf';
-      link.click();
-      window.URL.revokeObjectURL(url);
-      toast.success('All incidents PDF downloaded');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'PDF download failed');
-    }
-  };
 
   const downloadCsv = async () => {
     try {
@@ -53,10 +39,12 @@ export default function ReportsPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="text-2xl font-semibold">Reports</div>
-          <div className="text-sm text-slate-400">Generate shared operational exports for leadership, auditors, and incident review.</div>
+          <div className="text-sm text-slate-400">Generate shared operational reports for leadership, auditors, and incident review.</div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button className="btn-primary" onClick={downloadPdf}>Download PDF</button>
+          <Link className="btn-primary" to="/reports/print?autoPrint=1" target="_blank" rel="noreferrer">
+            Print Report
+          </Link>
           <button className="btn-secondary" onClick={downloadCsv}>Download CSV</button>
         </div>
       </div>
@@ -83,9 +71,9 @@ export default function ReportsPage() {
       <div className="panel">
         <div className="panel-header">Report Notes</div>
         <div className="panel-body space-y-2 text-sm text-slate-300">
-          <div>The PDF is organized by incident, with one dedicated section per incident record.</div>
+          <div>The printable report is organized by incident, with one dedicated section per incident record.</div>
           <div>The CSV export includes the full incident dataset, including timestamps, resolution fields, tags, and attachments.</div>
-          <div>The old per-incident PDF still exists from incident details, but shared reporting now lives here.</div>
+          <div>The print view is optimized for Chrome and Edge so Save as PDF matches the on-screen preview.</div>
         </div>
       </div>
     </div>

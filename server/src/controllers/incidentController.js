@@ -4,10 +4,9 @@ import Comment from '../models/Comment.js';
 import Incident from '../models/Incident.js';
 import ActivityLog from '../models/ActivityLog.js';
 import User from '../models/User.js';
-import { buildIncidentId, getSlaIndicator } from '../utils/incident.js';
+import { buildIncidentId, getSlaIndicator, parseDateTimeInTimeZone } from '../utils/incident.js';
 import { createIncidentLog } from '../services/auditService.js';
 import { queueIncidentNotification } from '../services/notificationService.js';
-import { buildAllIncidentsPdf, buildIncidentPdf } from '../services/reportService.js';
 import { isS3Storage, uploadAttachmentBuffer } from '../services/storageService.js';
 import path from 'path';
 
@@ -31,11 +30,7 @@ const buildFilter = (query) => {
   return filter;
 };
 
-const parseMaybeDate = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-};
+const parseMaybeDate = (value) => parseDateTimeInTimeZone(value);
 
 const parseMaybeArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -57,6 +52,32 @@ const safeParseJson = (value, fallback = []) => {
     return fallback;
   }
 };
+
+const formatExportDateTime = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const timeZone = process.env.TIME_ZONE || 'Asia/Yangon';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).format(date);
+};
+
+const populateIncidentReportQuery = (query) =>
+  query
+    .populate('createdBy', 'name email role')
+    .populate('assignedEngineer', 'name email role')
+    .populate({ path: 'comments', populate: { path: 'author', select: 'name email role' } })
+    .populate({ path: 'activityLogs', populate: { path: 'actor', select: 'name email role' } });
+
+const toIncidentReport = (incident) => ({ ...incident.toObject(), slaIndicator: getSlaIndicator(incident) });
 
 const normalizeIncidentPayload = (body) => ({
   title: body.title,
@@ -125,14 +146,10 @@ export const listIncidents = asyncHandler(async (req, res) => {
 });
 
 export const getIncident = asyncHandler(async (req, res) => {
-  const incident = await Incident.findOne({ _id: req.params.id, isDeleted: false })
-    .populate('createdBy', 'name email role')
-    .populate('assignedEngineer', 'name email role')
-    .populate({ path: 'comments', populate: { path: 'author', select: 'name email role' } })
-    .populate({ path: 'activityLogs', populate: { path: 'actor', select: 'name email role' } });
+  const incident = await populateIncidentReportQuery(Incident.findOne({ _id: req.params.id, isDeleted: false }));
 
   if (!incident) return res.status(404).json({ message: 'Incident not found' });
-  res.json({ incident: { ...incident.toObject(), slaIndicator: getSlaIndicator(incident) } });
+  res.json({ incident: toIncidentReport(incident) });
 });
 
 export const createIncident = asyncHandler(async (req, res) => {
@@ -259,11 +276,11 @@ export const exportCsv = asyncHandler(async (req, res) => {
       resolutionSummary: incident.resolutionSummary,
       assignedEngineer: incident.assignedEngineer?.name || '',
       createdBy: incident.createdBy?.name || '',
-      createdAt: incident.createdAt,
-      updatedAt: incident.updatedAt,
-      startTime: incident.startTime,
-      endTime: incident.endTime,
-      slaDueTime: incident.slaDueTime,
+      createdAt: formatExportDateTime(incident.createdAt),
+      updatedAt: formatExportDateTime(incident.updatedAt),
+      startTime: formatExportDateTime(incident.startTime),
+      endTime: formatExportDateTime(incident.endTime),
+      slaDueTime: formatExportDateTime(incident.slaDueTime),
       downtimeDuration: incident.downtimeDuration,
       tags: (incident.tags || []).join('|'),
       attachments: JSON.stringify(incident.attachments || [])
@@ -277,29 +294,19 @@ export const exportCsv = asyncHandler(async (req, res) => {
 });
 
 export const incidentReport = asyncHandler(async (req, res) => {
-  const incident = await Incident.findById(req.params.id)
-    .populate('createdBy', 'name email role')
-    .populate('assignedEngineer', 'name email role')
-    .populate({ path: 'comments', populate: { path: 'author', select: 'name email role' } })
-    .populate({ path: 'activityLogs', populate: { path: 'actor', select: 'name email role' } });
+  const incident = await populateIncidentReportQuery(Incident.findOne({ _id: req.params.id, isDeleted: false }));
   if (!incident) return res.status(404).json({ message: 'Incident not found' });
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename=${incident.incidentId}.pdf`);
-  const doc = buildIncidentPdf(incident, incident.comments, incident.activityLogs);
-  doc.pipe(res);
+  res.json({ incident: toIncidentReport(incident), generatedAt: new Date().toISOString() });
 });
 
 export const allIncidentsReport = asyncHandler(async (req, res) => {
-  const incidents = await Incident.find({ isDeleted: false })
-    .sort({ createdAt: -1 })
-    .populate('createdBy', 'name email role')
-    .populate('assignedEngineer', 'name email role')
-    .populate({ path: 'comments', populate: { path: 'author', select: 'name email role' } })
-    .populate({ path: 'activityLogs', populate: { path: 'actor', select: 'name email role' } });
+  const incidents = await populateIncidentReportQuery(
+    Incident.find({ isDeleted: false }).sort({ createdAt: -1 })
+  );
 
-  res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'attachment; filename=all-incidents-report.pdf');
-  const doc = buildAllIncidentsPdf(incidents);
-  doc.pipe(res);
+  res.json({
+    incidents: incidents.map(toIncidentReport),
+    generatedAt: new Date().toISOString()
+  });
 });

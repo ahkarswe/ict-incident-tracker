@@ -17,13 +17,15 @@ Base URL: `/api`
 - `DELETE /incidents/:id`
 - `POST /incidents/:id/comments`
 - `GET /incidents/:id/activity`
-- `GET /incidents/report`
-- `GET /incidents/:id/report`
+- `GET /incidents/report` - JSON data for the all-incidents printable report view
+- `GET /incidents/:id/report` - JSON data for the single-incident printable report view
 - `GET /incidents/export/csv`
 
 ## Reports
 
-- `GET /reports` - UI route for export actions and report summary
+- `GET /reports` - UI route for report summary and print actions
+- `GET /reports/print` - printable all-incidents report view
+- `GET /incidents/:id/print` - printable single-incident report view
 
 ## Dashboard
 

@@ -31,21 +31,6 @@ export default function IncidentDetailsPage() {
     }
   };
 
-  const downloadReport = async () => {
-    try {
-      const response = await api.get(`/incidents/${id}/report`, { responseType: 'blob' });
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${data.incidentId}.pdf`;
-      link.click();
-      window.URL.revokeObjectURL(url);
-      toast.success('PDF report downloaded');
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Report download failed');
-    }
-  };
-
   if (error) return <ErrorState message={error} />;
   if (!data) return <Loader />;
 
@@ -63,7 +48,9 @@ export default function IncidentDetailsPage() {
         </div>
         <div className="flex gap-2">
           <Link className="btn-secondary" to={`/incidents/${id}/edit`}>Edit</Link>
-          <button className="btn-primary" onClick={downloadReport}>Incident PDF</button>
+          <Link className="btn-primary" to={`/incidents/${id}/print?autoPrint=1`} target="_blank" rel="noreferrer">
+            Print Report
+          </Link>
         </div>
       </div>
 
@@ -77,8 +64,26 @@ export default function IncidentDetailsPage() {
               <div><div className="label">Impact Level</div><div>{data.impactLevel}</div></div>
               <div><div className="label">Created By</div><div>{data.createdBy?.name}</div></div>
               <div><div className="label">Assigned Engineer</div><div>{data.assignedEngineer?.name || 'Unassigned'}</div></div>
-              <div><div className="label">Start Time</div><div>{data.startTime ? new Date(data.startTime).toLocaleString() : '-'}</div></div>
-              <div><div className="label">End Time</div><div>{data.endTime ? new Date(data.endTime).toLocaleString() : '-'}</div></div>
+              <div><div className="label">Start Time</div><div>{data.startTime ? new Date(data.startTime).toLocaleString('en-US', {
+          timeZone: 'Asia/Yangon',
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        }) : '-'}</div></div>
+              <div><div className="label">End Time</div><div>{data.endTime ? new Date(data.endTime).toLocaleString('en-US', {
+          timeZone: 'Asia/Yangon',
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        }) : '-'}</div></div>
             </div>
             <div><div className="label">Root Cause</div><div>{data.rootCause || '—'}</div></div>
             <div><div className="label">Resolution Summary</div><div>{data.resolutionSummary || '—'}</div></div>
@@ -101,7 +106,16 @@ export default function IncidentDetailsPage() {
             <div className="panel-header">SLA</div>
             <div className="panel-body space-y-2">
               <div className="label">Due</div>
-              <div>{data.slaDueTime ? new Date(data.slaDueTime).toLocaleString() : '-'}</div>
+              <div>{data.slaDueTime ? new Date(data.slaDueTime).toLocaleString('en-US', {
+          timeZone: 'Asia/Yangon',
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        }) : '-'}</div>
               <div className="label">Downtime</div>
               <div>{data.downtimeDuration} minutes</div>
             </div>

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import api from '../api/axios';
 import { Loader } from '../components/Loader';
+import { formatDateTimeLocalValue } from '../utils/dateTime';
 
 const baseForm = {
   title: '',
@@ -47,9 +48,9 @@ export default function IncidentFormPage({ mode }) {
         rootCause: incident.rootCause || '',
         resolutionSummary: incident.resolutionSummary || '',
         assignedEngineer: incident.assignedEngineer?._id || '',
-        startTime: incident.startTime ? new Date(incident.startTime).toISOString().slice(0, 16) : '',
-        endTime: incident.endTime ? new Date(incident.endTime).toISOString().slice(0, 16) : '',
-        slaDueTime: incident.slaDueTime ? new Date(incident.slaDueTime).toISOString().slice(0, 16) : '',
+        startTime: formatDateTimeLocalValue(incident.startTime),
+        endTime: formatDateTimeLocalValue(incident.endTime),
+        slaDueTime: formatDateTimeLocalValue(incident.slaDueTime),
         tags: (incident.tags || []).join(', '),
         attachment: null,
         existingAttachments: incident.attachments || []
