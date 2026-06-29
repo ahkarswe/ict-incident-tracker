@@ -29,7 +29,7 @@ Base URL: `/api`
 
 ## Dashboard
 
-- `GET /dashboard/summary`
+- `GET /dashboard/summary` - supports `from` and `to` date filters for the summary range
 
 ## Users
 

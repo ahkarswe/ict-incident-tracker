@@ -31,10 +31,10 @@ router.post(
   upload.array('attachments', 5),
   [
     body('title').isLength({ min: 3 }),
-    body('description').isLength({ min: 10 }),
+    body('description').isLength({ min: 3 }),
     body('category').isIn(['Network', 'Server', 'Cloud', 'Security', 'Database', 'Backup', 'Application', 'Power', 'ISP']),
     body('priority').isIn(['Critical', 'High', 'Medium', 'Low']),
-    body('slaDueTime').isISO8601()
+    body('slaDueTime').optional({ checkFalsy: true }).isISO8601()
   ],
   validate,
   authorize(ROLES.ADMIN, ROLES.ENGINEER),

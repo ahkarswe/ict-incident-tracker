@@ -24,13 +24,30 @@ const pieColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6
 export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [filters, setFilters] = useState({ from: '', to: '' });
 
   useEffect(() => {
+    let ignore = false;
+    const params = new URLSearchParams();
+    if (filters.from) params.set('from', filters.from);
+    if (filters.to) params.set('to', filters.to);
+
+    setError('');
+    setData(null);
+
     api
-      .get('/dashboard/summary')
-      .then(({ data }) => setData(data))
-      .catch((err) => setError(err.response?.data?.message || 'Failed to load dashboard'));
-  }, []);
+      .get(`/dashboard/summary${params.toString() ? `?${params.toString()}` : ''}`)
+      .then(({ data }) => {
+        if (!ignore) setData(data);
+      })
+      .catch((err) => {
+        if (!ignore) setError(err.response?.data?.message || 'Failed to load dashboard');
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, [filters]);
 
   const monthly = useMemo(
     () =>
@@ -48,6 +65,32 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <div className="panel p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-40">
+            <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">From</div>
+            <input
+              className="input"
+              type="date"
+              value={filters.from}
+              onChange={(e) => setFilters((current) => ({ ...current, from: e.target.value }))}
+            />
+          </div>
+          <div className="min-w-40">
+            <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">To</div>
+            <input
+              className="input"
+              type="date"
+              value={filters.to}
+              onChange={(e) => setFilters((current) => ({ ...current, to: e.target.value }))}
+            />
+          </div>
+          <button className="btn-secondary" onClick={() => setFilters({ from: '', to: '' })}>
+            Clear Filter
+          </button>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Total Incidents" value={summary.total} />
         <StatCard label="Open Incidents" value={summary.open} accent="yellow" />

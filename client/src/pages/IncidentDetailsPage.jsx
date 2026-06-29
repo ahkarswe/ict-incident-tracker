@@ -62,6 +62,7 @@ export default function IncidentDetailsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div><div className="label">Category</div><div>{data.category}</div></div>
               <div><div className="label">Impact Level</div><div>{data.impactLevel}</div></div>
+              <div><div className="label">Report By</div><div>{data.reportBy || '—'}</div></div>
               <div><div className="label">Created By</div><div>{data.createdBy?.name}</div></div>
               <div><div className="label">Assigned Engineer</div><div>{data.assignedEngineer?.name || 'Unassigned'}</div></div>
               <div><div className="label">Start Time</div><div>{data.startTime ? new Date(data.startTime).toLocaleString('en-US', {

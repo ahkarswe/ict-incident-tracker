@@ -5,7 +5,9 @@ import api from '../api/axios';
 import { Loader } from '../components/Loader';
 import { formatDateTimeLocalValue } from '../utils/dateTime';
 
-const baseForm = {
+const buildDefaultSlaDueTime = () => formatDateTimeLocalValue(new Date(Date.now() + 4 * 60 * 60 * 1000));
+
+const createBaseForm = () => ({
   title: '',
   description: '',
   category: 'Network',
@@ -14,21 +16,23 @@ const baseForm = {
   impactLevel: 'Medium',
   rootCause: '',
   resolutionSummary: '',
+  reportBy: '',
   assignedEngineer: '',
   startTime: '',
   endTime: '',
-  slaDueTime: '',
+  slaDueTime: buildDefaultSlaDueTime(),
   tags: '',
   attachment: null,
   existingAttachments: []
-};
+});
 
 export default function IncidentFormPage({ mode }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [form, setForm] = useState(baseForm);
+  const [form, setForm] = useState(createBaseForm);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(mode === 'edit');
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     api.get('/users').then(({ data }) => setUsers(data.users.filter((user) => user.role !== 'Viewer'))).catch(() => {});
@@ -47,6 +51,7 @@ export default function IncidentFormPage({ mode }) {
         impactLevel: incident.impactLevel || 'Medium',
         rootCause: incident.rootCause || '',
         resolutionSummary: incident.resolutionSummary || '',
+        reportBy: incident.reportBy || '',
         assignedEngineer: incident.assignedEngineer?._id || '',
         startTime: formatDateTimeLocalValue(incident.startTime),
         endTime: formatDateTimeLocalValue(incident.endTime),
@@ -59,10 +64,21 @@ export default function IncidentFormPage({ mode }) {
     });
   }, [id, mode]);
 
-  const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+  const update = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setFieldErrors((current) => {
+      if (!current[key]) return current;
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const fieldClass = (baseClass, field) => `${baseClass}${fieldErrors[field] ? ' field-invalid' : ''}`;
 
   const submit = async (event) => {
     event.preventDefault();
+    setFieldErrors({});
     const hasFile = Boolean(form.attachment);
     const sendBody = hasFile ? new FormData() : {};
     const append = (key, value) => {
@@ -81,6 +97,7 @@ export default function IncidentFormPage({ mode }) {
     append('impactLevel', form.impactLevel);
     append('rootCause', form.rootCause);
     append('resolutionSummary', form.resolutionSummary);
+    append('reportBy', form.reportBy);
     append('assignedEngineer', form.assignedEngineer || '');
     append('startTime', form.startTime || '');
     append('endTime', form.endTime || '');
@@ -97,8 +114,19 @@ export default function IncidentFormPage({ mode }) {
         await api.patch(`/incidents/${id}`, sendBody);
         toast.success('Incident updated');
       }
+      setFieldErrors({});
       navigate('/incidents');
     } catch (error) {
+      const validationErrors = error.response?.data?.errors || [];
+      if (validationErrors.length) {
+        const nextErrors = validationErrors.reduce((acc, item) => {
+          if (item?.field) acc[item.field] = item.message;
+          return acc;
+        }, {});
+        setFieldErrors(nextErrors);
+        toast.error(validationErrors[0]?.message || error.response?.data?.message || 'Validation failed');
+        return;
+      }
       toast.error(error.response?.data?.message || 'Save failed');
     }
   };
@@ -120,9 +148,17 @@ export default function IncidentFormPage({ mode }) {
       <div className="panel p-5 space-y-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="label">Title</label>
-            <input className="input mt-1" value={form.title} onChange={(e) => update('title', e.target.value)} />
+            <label className="label">Title *</label>
+            <input className={fieldClass('input mt-1', 'title')} value={form.title} onChange={(e) => update('title', e.target.value)} />
+            {fieldErrors.title ? <div className="field-error-text">{fieldErrors.title}</div> : null}
           </div>
+          <div>
+            <label className="label">Report By</label>
+            <input className="input mt-1" value={form.reportBy} onChange={(e) => update('reportBy', e.target.value)} placeholder="Reported by name" />
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="label">Assigned Engineer</label>
             <select className="select mt-1" value={form.assignedEngineer} onChange={(e) => update('assignedEngineer', e.target.value)}>
@@ -168,10 +204,11 @@ export default function IncidentFormPage({ mode }) {
             ['status', ['Open', 'In Progress', 'Monitoring', 'Resolved', 'Closed']]
           ].map(([field, options]) => (
             <div key={field}>
-              <label className="label">{field}</label>
-              <select className="select mt-1" value={form[field]} onChange={(e) => update(field, e.target.value)}>
+              <label className="label">{field}{field === 'category' || field === 'priority' ? ' *' : ''}</label>
+              <select className={fieldClass('select mt-1', field)} value={form[field]} onChange={(e) => update(field, e.target.value)}>
                 {options.map((option) => <option key={option} value={option}>{option}</option>)}
               </select>
+              {fieldErrors[field] ? <div className="field-error-text">{fieldErrors[field]}</div> : null}
             </div>
           ))}
         </div>
@@ -193,8 +230,9 @@ export default function IncidentFormPage({ mode }) {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="label">SLA Due Time</label>
-            <input type="datetime-local" className="input mt-1" value={form.slaDueTime} onChange={(e) => update('slaDueTime', e.target.value)} />
+            <label className="label">SLA Due Time *</label>
+            <input type="datetime-local" className={fieldClass('input mt-1', 'slaDueTime')} value={form.slaDueTime} onChange={(e) => update('slaDueTime', e.target.value)} />
+            {fieldErrors.slaDueTime ? <div className="field-error-text">{fieldErrors.slaDueTime}</div> : null}
           </div>
           <div>
             <label className="label">Tags</label>

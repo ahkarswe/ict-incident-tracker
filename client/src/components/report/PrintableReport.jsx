@@ -331,6 +331,7 @@ export const IncidentReportSection = ({ incident, pageBreak = false }) => {
     { label: 'Priority', value: incident.priority },
     { label: 'Status', value: incident.status },
     { label: 'Impact Level', value: incident.impactLevel },
+    { label: 'Report By', value: incident.reportBy || 'N/A' },
     { label: 'Created By', value: normalizeUser(incident.createdBy) },
     { label: 'Assigned Engineer', value: normalizeUser(incident.assignedEngineer) },
     { label: 'Start Time', value: formatDateTime(incident.startTime) },

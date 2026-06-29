@@ -8,7 +8,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: 'admin@ict.local', password: 'Admin123!' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
   const submit = async (event) => {

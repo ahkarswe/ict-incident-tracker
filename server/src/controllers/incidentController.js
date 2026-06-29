@@ -32,6 +32,8 @@ const buildFilter = (query) => {
 
 const parseMaybeDate = (value) => parseDateTimeInTimeZone(value);
 
+const getDefaultSlaDueTime = () => new Date(Date.now() + 4 * 60 * 60 * 1000);
+
 const parseMaybeArray = (value) => {
   if (Array.isArray(value)) return value;
   if (!value) return [];
@@ -88,6 +90,7 @@ const normalizeIncidentPayload = (body) => ({
   impactLevel: body.impactLevel,
   rootCause: body.rootCause,
   resolutionSummary: body.resolutionSummary,
+  reportBy: body.reportBy || '',
   assignedEngineer: body.assignedEngineer || null,
   startTime: parseMaybeDate(body.startTime),
   endTime: parseMaybeDate(body.endTime),
@@ -157,6 +160,7 @@ export const createIncident = asyncHandler(async (req, res) => {
   const attachments = [...(await mapUploadedAttachmentsForStorage(req.files || [])), ...safeParseJson(req.body.existingAttachments, [])];
   const incident = await Incident.create({
     ...normalizeIncidentPayload(req.body),
+    slaDueTime: parseMaybeDate(req.body.slaDueTime) ?? getDefaultSlaDueTime(),
     attachments,
     incidentId: buildIncidentId(count),
     createdBy: req.user._id
@@ -274,6 +278,7 @@ export const exportCsv = asyncHandler(async (req, res) => {
       impactLevel: incident.impactLevel,
       rootCause: incident.rootCause,
       resolutionSummary: incident.resolutionSummary,
+      reportBy: incident.reportBy || '',
       assignedEngineer: incident.assignedEngineer?.name || '',
       createdBy: incident.createdBy?.name || '',
       createdAt: formatExportDateTime(incident.createdAt),
