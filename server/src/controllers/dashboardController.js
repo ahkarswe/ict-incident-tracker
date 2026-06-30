@@ -1,32 +1,50 @@
 import asyncHandler from 'express-async-handler';
 import Incident from '../models/Incident.js';
 
+const buildCreatedAtFilter = (query) => {
+  const filter = { isDeleted: false };
+  if (query.from || query.to) {
+    filter.createdAt = {};
+    if (query.from) filter.createdAt.$gte = new Date(query.from);
+    if (query.to) {
+      const toDate = new Date(query.to);
+      toDate.setHours(23, 59, 59, 999);
+      filter.createdAt.$lte = toDate;
+    }
+  }
+  return filter;
+};
+
+
 export const getSummary = asyncHandler(async (req, res) => {
+  const createdAtFilter = buildCreatedAtFilter(req.query);
+  const breachedFilter = {
+    ...createdAtFilter,
+    slaDueTime: { $lt: new Date() },
+    status: { $nin: ['Resolved', 'Closed'] }
+  };
+
   const [total, open, critical, resolved, breached] = await Promise.all([
-    Incident.countDocuments({ isDeleted: false }),
-    Incident.countDocuments({ isDeleted: false, status: { $in: ['Open', 'In Progress', 'Monitoring'] } }),
-    Incident.countDocuments({ isDeleted: false, priority: 'Critical' }),
-    Incident.countDocuments({ isDeleted: false, status: 'Resolved' }),
-    Incident.countDocuments({
-      isDeleted: false,
-      slaDueTime: { $lt: new Date() },
-      status: { $nin: ['Resolved', 'Closed'] }
-    })
+    Incident.countDocuments(createdAtFilter),
+    Incident.countDocuments({ ...createdAtFilter, status: { $in: ['Open', 'In Progress', 'Monitoring'] } }),
+    Incident.countDocuments({ ...createdAtFilter, priority: 'Critical' }),
+    Incident.countDocuments({ ...createdAtFilter, status: 'Resolved' }),
+    Incident.countDocuments({ isDeleted: false, ...breachedFilter })
   ]);
 
   const byCategory = await Incident.aggregate([
-    { $match: { isDeleted: false } },
+    { $match: createdAtFilter },
     { $group: { _id: '$category', value: { $sum: 1 } } },
     { $sort: { value: -1 } }
   ]);
 
   const byPriority = await Incident.aggregate([
-    { $match: { isDeleted: false } },
+    { $match: createdAtFilter },
     { $group: { _id: '$priority', value: { $sum: 1 } } }
   ]);
 
   const monthlyTrend = await Incident.aggregate([
-    { $match: { isDeleted: false } },
+    { $match: createdAtFilter },
     {
       $group: {
         _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
@@ -36,13 +54,13 @@ export const getSummary = asyncHandler(async (req, res) => {
     { $sort: { '_id.year': 1, '_id.month': 1 } }
   ]);
 
-  const slaTotal = await Incident.countDocuments({ isDeleted: false });
+  const slaTotal = await Incident.countDocuments(createdAtFilter);
   const slaMet = await Incident.countDocuments({
-    isDeleted: false,
+    ...createdAtFilter,
     $or: [{ status: { $in: ['Resolved', 'Closed'] } }, { slaDueTime: { $gte: new Date() } }]
   });
 
-  const recent = await Incident.find({ isDeleted: false })
+  const recent = await Incident.find(createdAtFilter)
     .sort({ createdAt: -1 })
     .limit(10)
     .populate('assignedEngineer', 'name email role')

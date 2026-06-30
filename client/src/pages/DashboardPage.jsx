@@ -24,13 +24,32 @@ const pieColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6
 export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ from: '', to: '' });
 
   useEffect(() => {
-    api
-      .get('/dashboard/summary')
-      .then(({ data }) => setData(data))
-      .catch((err) => setError(err.response?.data?.message || 'Failed to load dashboard'));
-  }, []);
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const params = new URLSearchParams();
+        if (filters.from) params.set('from', filters.from);
+        if (filters.to) params.set('to', filters.to);
+        const query = params.toString();
+        const { data } = await api.get(`/dashboard/summary${query ? `?${query}` : ''}`);
+        if (!cancelled) setData(data);
+      } catch (err) {
+        if (!cancelled) setError(err.response?.data?.message || 'Failed to load dashboard');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [filters.from, filters.to]);
 
   const monthly = useMemo(
     () =>
@@ -42,12 +61,28 @@ export default function DashboardPage() {
   );
 
   if (error) return <ErrorState message={error} />;
-  if (!data) return <Loader />;
+  if (loading && !data) return <Loader />;
 
   const { summary, byCategory, byPriority, slaComplianceRate, recent } = data;
 
   return (
     <div className="space-y-6">
+      <div className="panel p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <div className="label">From</div>
+            <input className="input mt-1" type="date" value={filters.from} onChange={(e) => setFilters((current) => ({ ...current, from: e.target.value }))} />
+          </div>
+          <div>
+            <div className="label">To</div>
+            <input className="input mt-1" type="date" value={filters.to} onChange={(e) => setFilters((current) => ({ ...current, to: e.target.value }))} />
+          </div>
+          <button className="btn-secondary h-10" type="button" onClick={() => setFilters({ from: '', to: '' })} disabled={!filters.from && !filters.to}>
+            Clear Range
+          </button>
+        </div>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Total Incidents" value={summary.total} />
         <StatCard label="Open Incidents" value={summary.open} accent="yellow" />
