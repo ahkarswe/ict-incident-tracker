@@ -125,6 +125,24 @@ html.light .select {
   border-color: #cbd5e1;
 }
 
+.field-invalid {
+  @apply border-rose-500 bg-rose-950/30 text-rose-100 focus:border-rose-400 focus:ring-1 focus:ring-rose-500/20;
+}
+
+html.light .field-invalid {
+  background: #fff1f2;
+  color: #0f172a;
+  border-color: #fb7185 !important;
+}
+
+.field-error-text {
+  @apply mt-1 text-xs text-rose-400;
+}
+
+html.light .field-error-text {
+  color: #e11d48;
+}
+
 .btn {
   @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition;
 }

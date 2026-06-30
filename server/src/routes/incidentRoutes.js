@@ -31,7 +31,7 @@ router.post(
   upload.array('attachments', 5),
   [
     body('title').isLength({ min: 3 }),
-    body('description').isLength({ min: 10 }),
+    body('description').trim().notEmpty().withMessage('Description is required'),
     body('category').isIn(['Network', 'Server', 'Cloud', 'Security', 'Database', 'Backup', 'Application', 'Power', 'ISP']),
     body('priority').isIn(['Critical', 'High', 'Medium', 'Low']),
     body('slaDueTime').isISO8601()
