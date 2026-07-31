@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ from: '', to: '' });
+  const [tableStatus, setTableStatus] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -36,6 +37,7 @@ export default function DashboardPage() {
         const params = new URLSearchParams();
         if (filters.from) params.set('from', filters.from);
         if (filters.to) params.set('to', filters.to);
+        if (tableStatus) params.set('tableStatus', tableStatus);
         const query = params.toString();
         const { data } = await api.get(`/dashboard/summary${query ? `?${query}` : ''}`);
         if (!cancelled) setData(data);
@@ -49,7 +51,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [filters.from, filters.to]);
+  }, [filters.from, filters.to, tableStatus]);
 
   const monthly = useMemo(
     () =>
@@ -81,16 +83,17 @@ export default function DashboardPage() {
           <button className="btn-secondary h-10" type="button" onClick={() => setFilters({ from: '', to: '' })} disabled={!filters.from && !filters.to}>
             Clear Range
           </button>
+          {tableStatus ? <button className="btn-secondary h-10" type="button" onClick={() => setTableStatus('')}>Show Recent Incidents</button> : null}
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard label="Total Incidents" value={summary.total} />
-        <StatCard label="Open Incidents" value={summary.open} accent="yellow" />
-        <StatCard label="Critical Incidents" value={summary.critical} accent="red" />
+        <StatCard label="Open Incidents" value={summary.open} accent="yellow" onClick={() => setTableStatus(tableStatus === 'open' ? '' : 'open')} />
+        <StatCard label="Critical Incidents" value={summary.critical} accent="red" onClick={() => setTableStatus(tableStatus === 'critical' ? '' : 'critical')} />
         <StatCard label="Resolved Incidents" value={summary.resolved} accent="green" />
-        <StatCard label="Closed Incidents" value={summary.closed} accent="green" />
-        <StatCard label="SLA Breached" value={summary.breached} accent="red" />
+        <StatCard label="Closed Incidents" value={summary.closed} accent="green" onClick={() => setTableStatus(tableStatus === 'closed' ? '' : 'closed')} />
+        <StatCard label="SLA Breached" value={summary.breached} accent="red" onClick={() => setTableStatus(tableStatus === 'breached' ? '' : 'breached')} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -152,7 +155,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="panel">
-        <div className="panel-header">Incidents in Selected Date Range</div>
+        <div className="panel-header">{tableStatus === 'open' ? 'Open Incidents' : tableStatus === 'closed' ? 'Closed Incidents' : tableStatus === 'critical' ? 'Critical Incidents' : tableStatus === 'breached' ? 'SLA Breached Incidents' : 'Incidents in Selected Date Range'}</div>
         <div className="panel-body">
           <IncidentTable items={recent} />
         </div>

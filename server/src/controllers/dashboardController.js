@@ -26,7 +26,7 @@ export const getSummary = asyncHandler(async (req, res) => {
 
   const [total, open, critical, resolved, closed, breached] = await Promise.all([
     Incident.countDocuments(startTimeFilter),
-    Incident.countDocuments({ ...startTimeFilter, status: { $in: ['Open', 'In Progress', 'Monitoring'] } }),
+    Incident.countDocuments({ ...startTimeFilter, status: { $ne: 'Closed' } }),
     Incident.countDocuments({ ...startTimeFilter, priority: 'Critical' }),
     Incident.countDocuments({ ...startTimeFilter, status: 'Resolved' }),
     Incident.countDocuments({ ...startTimeFilter, status: 'Closed' }),
@@ -61,9 +61,15 @@ export const getSummary = asyncHandler(async (req, res) => {
     $or: [{ status: { $in: ['Resolved', 'Closed'] } }, { slaDueTime: { $gte: new Date() } }]
   });
 
-  const recent = await Incident.find(startTimeFilter)
-    .sort({ startTime: -1 })
-    .limit(10)
+  const tableFilter = { ...startTimeFilter };
+  if (req.query.tableStatus === 'open') tableFilter.status = { $ne: 'Closed' };
+  if (req.query.tableStatus === 'closed') tableFilter.status = 'Closed';
+  if (req.query.tableStatus === 'critical') tableFilter.priority = 'Critical';
+  if (req.query.tableStatus === 'breached') Object.assign(tableFilter, breachedFilter);
+
+  const recentQuery = Incident.find(tableFilter).sort({ startTime: -1 });
+  if (!req.query.tableStatus && !req.query.from && !req.query.to) recentQuery.limit(10);
+  const recent = await recentQuery
     .populate('assignedEngineer', 'name email role')
     .populate('createdBy', 'name email role');
 
