@@ -6,7 +6,7 @@ export const IncidentTable = ({ items = [] }) => (
     <table className="min-w-full divide-y divide-slate-800 text-sm">
       <thead className="bg-slate-900">
         <tr>
-          {['ID', 'Title', 'Priority', 'Status', 'Category', 'Engineer', 'SLA', 'Created'].map((head) => (
+          {['ID', 'Title', 'Priority', 'Status', 'Category', 'Engineer', 'SLA', 'Start Time'].map((head) => (
             <th key={head} className="px-4 py-3 text-left font-medium text-slate-400">
               {head}
             </th>
@@ -31,7 +31,7 @@ export const IncidentTable = ({ items = [] }) => (
             <td className="px-4 py-3 text-slate-300">{incident.category}</td>
             <td className="px-4 py-3 text-slate-300">{incident.assignedEngineer?.name || 'Unassigned'}</td>
             <td className="px-4 py-3 text-slate-300">{incident.slaIndicator}</td>
-            <td className="px-4 py-3 text-slate-400">{incident.createdAt ? new Date(incident.createdAt).toLocaleDateString() : '-'}</td>
+            <td className="px-4 py-3 text-slate-400">{incident.startTime ? new Date(incident.startTime).toLocaleString() : '-'}</td>
           </tr>
         ))}
       </tbody>

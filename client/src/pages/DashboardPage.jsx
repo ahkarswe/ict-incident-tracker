@@ -68,6 +68,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="panel p-4">
+        <div className="mb-3 text-sm font-medium text-slate-300">Filter by Start Time</div>
         <div className="flex flex-wrap items-end gap-3">
           <div>
             <div className="label">From</div>
@@ -83,11 +84,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
         <StatCard label="Total Incidents" value={summary.total} />
         <StatCard label="Open Incidents" value={summary.open} accent="yellow" />
         <StatCard label="Critical Incidents" value={summary.critical} accent="red" />
         <StatCard label="Resolved Incidents" value={summary.resolved} accent="green" />
+        <StatCard label="Closed Incidents" value={summary.closed} accent="green" />
         <StatCard label="SLA Breached" value={summary.breached} accent="red" />
       </div>
 
@@ -150,7 +152,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="panel">
-        <div className="panel-header">Recent Incidents</div>
+        <div className="panel-header">Incidents in Selected Date Range</div>
         <div className="panel-body">
           <IncidentTable items={recent} />
         </div>
